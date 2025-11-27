@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odd One Out - HealthQuest Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 480px;
+            width: 100%;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #64748B;
+        }
+
+        .progress-bar {
+            background: #E2E8F0;
+            border-radius: 100px;
+            height: 8px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #2DD4BF, #3B82F6);
+            height: 100%;
+            border-radius: 100px;
+            transition: width 0.3s ease;
+        }
+
+        .question-number {
+            font-size: 14px;
+            color: #64748B;
+            margin-bottom: 16px;
+        }
+
+        .question {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 24px;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: #F8FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 20px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #3B82F6;
+            background: #EFF6FF;
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .option-btn .emoji {
+            font-size: 32px;
+        }
+
+        .option-btn .text {
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .option-btn.correct {
+            background: #DCFCE7;
+            border-color: #22C55E;
+        }
+
+        .option-btn.wrong {
+            background: #FEE2E2;
+            border-color: #EF4444;
+        }
+
+        .feedback {
+            display: none;
+            background: #F8FAFC;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .feedback-icon {
+            font-size: 24px;
+        }
+
+        .feedback-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .feedback-title.correct {
+            color: #22C55E;
+        }
+
+        .feedback-title.wrong {
+            color: #EF4444;
+        }
+
+        .explanation {
+            color: #475569;
+            font-size: 15px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .fun-fact {
+            background: linear-gradient(135deg, #DBEAFE, #E0E7FF);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #3730A3;
+        }
+
+        .fun-fact-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #3B82F6, #2DD4BF);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .next-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Final Screen Styles */
+        .final-screen {
+            display: none;
+        }
+
+        .final-screen.show {
+            display: block;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #F97316, #3B82F6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 16px 0;
+        }
+
+        .score-message {
+            font-size: 18px;
+            color: #64748B;
+            margin-bottom: 24px;
+        }
+
+        .lumo-message {
+            background: linear-gradient(135deg, #CCFBF1, #DBEAFE);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .lumo-avatar {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .lumo-text {
+            font-size: 16px;
+            color: #1E293B;
+            line-height: 1.5;
+        }
+
+        .lumo-name {
+            font-weight: 600;
+            color: #2DD4BF;
+        }
+
+        .unlock-list {
+            text-align: left;
+            margin: 20px 0;
+            padding: 0 16px;
+        }
+
+        .unlock-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 15px;
+            color: #334155;
+        }
+
+        .unlock-item .check {
+            color: #22C55E;
+            font-size: 18px;
+        }
+
+        .cta-btn {
+            background: linear-gradient(135deg, #F97316, #FB923C);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 18px 32px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            margin-bottom: 12px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            color: #64748B;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .secondary-btn:hover {
+            border-color: #3B82F6;
+            color: #3B82F6;
+        }
+
+        .game-screen {
+            display: block;
+        }
+
+        .game-screen.hide {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .game-container {
+                padding: 16px;
+            }
+
+            .title {
+                font-size: 20px;
+            }
+
+            .question {
+                font-size: 18px;
+            }
+
+            .option-btn {
+                padding: 16px 12px;
+            }
+
+            .option-btn .emoji {
+                font-size: 28px;
+            }
+
+            .score-display {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="header">
+                <div class="logo">🐉</div>
+                <h1 class="title">Odd One Out!</h1>
+                <p class="subtitle">Find which one doesn't belong</p>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 20%"></div>
+            </div>
+
+            <p class="question-number" id="questionNumber">Question 1 of 5</p>
+            <h2 class="question" id="question">Which one doesn't belong?</h2>
+
+            <div class="options" id="options">
+                <!-- Options will be inserted here -->
+            </div>
+
+            <div class="feedback" id="feedback">
+                <div class="feedback-header">
+                    <span class="feedback-icon" id="feedbackIcon">✅</span>
+                    <span class="feedback-title" id="feedbackTitle">Correct!</span>
+                </div>
+                <p class="explanation" id="explanation"></p>
+                <div class="fun-fact">
+                    <p class="fun-fact-label">🌟 Fun Fact:</p>
+                    <p id="funFact"></p>
+                </div>
+            </div>
+
+            <button class="next-btn" id="nextBtn" disabled>Next Question →</button>
+        </div>
+
+        <!-- Final Screen -->
+        <div class="final-screen" id="finalScreen">
+            <div class="header">
+                <div class="logo">🎉</div>
+                <h1 class="title">Great Job!</h1>
+            </div>
+
+            <p class="score-display" id="scoreDisplay">5 out of 5!</p>
+            <p class="score-message" id="scoreMessage">You're a health superstar!</p>
+
+            <div class="lumo-message">
+                <div class="lumo-avatar">🐉</div>
+                <p class="lumo-text">
+                    "That was fun! Want to keep playing? I have <strong>20+ more games</strong> waiting for you!"
+                    <br><br>
+                    — <span class="lumo-name">Lumo</span>
+                </p>
+            </div>
+
+            <div class="unlock-list">
+                <div class="unlock-item">
+                    <span class="check">✓</span>
+                    <span>20+ educational mini-games</span>
+                </div>
+                <div class="unlock-item">
+                    <span class="check">✓</span>
+                    <span>Your own dragon companion</span>
+                </div>
+                <div class="unlock-item">
+                    <span class="check">✓</span>
+                    <span>XP, rewards & achievements</span>
+                </div>
+                <div class="unlock-item">
+                    <span class="check">✓</span>
+                    <span>Family dashboard for parents</span>
+                </div>
+            </div>
+
+            <a href="https://app.discoverhealthquest.com/auth/signup?ref=SG" class="cta-btn" target="_blank" rel="noopener">
+                Sign Up Free — Just 5 Fields! 🚀
+            </a>
+
+            <button class="secondary-btn" id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const puzzles = [
+            {
+                options: [
+                    { emoji: "🍎", text: "Apple" },
+                    { emoji: "🍌", text: "Banana" },
+                    { emoji: "❤️", text: "Heart" },
+                    { emoji: "🍊", text: "Orange" }
+                ],
+                answer: "Heart",
+                explanation: "Heart is a body part. The others are fruits!",
+                funFact: "Your heart beats about 100,000 times every day! ❤️"
+            },
+            {
+                options: [
+                    { emoji: "🏃", text: "Jump" },
+                    { emoji: "🏃", text: "Run" },
+                    { emoji: "🍕", text: "Pizza" },
+                    { emoji: "🏊", text: "Swim" }
+                ],
+                answer: "Pizza",
+                explanation: "Pizza is a food. The others are ways to move your body!",
+                funFact: "Jumping helps make your bones stronger! 🦘"
+            },
+            {
+                options: [
+                    { emoji: "👀", text: "Eyes" },
+                    { emoji: "👂", text: "Ears" },
+                    { emoji: "🥕", text: "Carrot" },
+                    { emoji: "👃", text: "Nose" }
+                ],
+                answer: "Carrot",
+                explanation: "Carrot is a vegetable. The others are parts of your face!",
+                funFact: "Your nose can smell over 1 trillion different scents! 👃"
+            },
+            {
+                options: [
+                    { emoji: "💧", text: "Water" },
+                    { emoji: "🥛", text: "Milk" },
+                    { emoji: "⚽", text: "Soccer" },
+                    { emoji: "🧃", text: "Juice" }
+                ],
+                answer: "Soccer",
+                explanation: "Soccer is a sport. The others are healthy drinks!",
+                funFact: "Your body is made of about 60% water! 💧"
+            },
+            {
+                options: [
+                    { emoji: "😴", text: "Sleep" },
+                    { emoji: "🛋️", text: "Rest" },
+                    { emoji: "🥦", text: "Broccoli" },
+                    { emoji: "💤", text: "Nap" }
+                ],
+                answer: "Broccoli",
+                explanation: "Broccoli is a vegetable. The others help your body recharge!",
+                funFact: "Getting enough sleep helps your brain remember what you learned! 😴"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const gameScreen = document.getElementById('gameScreen');
+        const finalScreen = document.getElementById('finalScreen');
+        const optionsContainer = document.getElementById('options');
+        const feedback = document.getElementById('feedback');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        const feedbackTitle = document.getElementById('feedbackTitle');
+        const explanation = document.getElementById('explanation');
+        const funFact = document.getElementById('funFact');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressFill = document.getElementById('progressFill');
+        const questionNumber = document.getElementById('questionNumber');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const scoreMessage = document.getElementById('scoreMessage');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function loadQuestion() {
+            answered = false;
+            feedback.classList.remove('show');
+            nextBtn.disabled = true;
+
+            const puzzle = puzzles[currentQuestion];
+            const shuffledOptions = shuffleArray(puzzle.options);
+
+            questionNumber.textContent = `Question ${currentQuestion + 1} of 5`;
+            progressFill.style.width = `${((currentQuestion + 1) / 5) * 100}%`;
+
+            optionsContainer.innerHTML = '';
+            shuffledOptions.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `
+                    <span class="emoji">${option.emoji}</span>
+                    <span class="text">${option.text}</span>
+                `;
+                btn.addEventListener('click', () => selectAnswer(option.text, btn));
+                optionsContainer.appendChild(btn);
+            });
+
+            if (currentQuestion === puzzles.length - 1) {
+                nextBtn.textContent = 'See Results 🎉';
+            } else {
+                nextBtn.textContent = 'Next Question →';
+            }
+        }
+
+        function selectAnswer(answer, btn) {
+            if (answered) return;
+            answered = true;
+
+            const puzzle = puzzles[currentQuestion];
+            const isCorrect = answer === puzzle.answer;
+
+            // Disable all buttons and show correct/wrong
+            const allBtns = optionsContainer.querySelectorAll('.option-btn');
+            allBtns.forEach(b => {
+                b.disabled = true;
+                const text = b.querySelector('.text').textContent;
+                if (text === puzzle.answer) {
+                    b.classList.add('correct');
+                }
+            });
+
+            if (isCorrect) {
+                score++;
+                feedbackIcon.textContent = '✅';
+                feedbackTitle.textContent = 'Correct!';
+                feedbackTitle.className = 'feedback-title correct';
+            } else {
+                btn.classList.add('wrong');
+                feedbackIcon.textContent = '❌';
+                feedbackTitle.textContent = 'Not quite!';
+                feedbackTitle.className = 'feedback-title wrong';
+            }
+
+            explanation.textContent = puzzle.explanation;
+            funFact.textContent = puzzle.funFact;
+            feedback.classList.add('show');
+            nextBtn.disabled = false;
+        }
+
+        function showFinalScreen() {
+            gameScreen.classList.add('hide');
+            finalScreen.classList.add('show');
+
+            scoreDisplay.textContent = `${score} out of 5!`;
+
+            if (score === 5) {
+                scoreMessage.textContent = "Perfect score! You're a health superstar! 🌟";
+            } else if (score >= 3) {
+                scoreMessage.textContent = "Great job! You know your health stuff! 💪";
+            } else {
+                scoreMessage.textContent = "Good try! Keep learning with Lumo! 📚";
+            }
+        }
+
+        function resetGame() {
+            currentQuestion = 0;
+            score = 0;
+            answered = false;
+
+            gameScreen.classList.remove('hide');
+            finalScreen.classList.remove('show');
+
+            loadQuestion();
+        }
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion >= puzzles.length) {
+                showFinalScreen();
+            } else {
+                loadQuestion();
+            }
+        });
+
+        playAgainBtn.addEventListener('click', resetGame);
+
+        // Start the game
+        loadQuestion();
+    </script>
+</body>
+</html>
